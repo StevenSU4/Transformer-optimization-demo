@@ -1,0 +1,16 @@
+Traceback (most recent call last):
+  File "D:\桌面\3114_project\Transformer-optimization-demo\transformer.py", line 4, in <module>
+    from torchtext.datasets import IMDB
+  File "D:\Anaconda\envs\torch\lib\site-packages\torchtext\__init__.py", line 18, in <module>
+    from torchtext import _extension  # noqa: F401
+  File "D:\Anaconda\envs\torch\lib\site-packages\torchtext\_extension.py", line 64, in <module>
+    _init_extension()
+  File "D:\Anaconda\envs\torch\lib\site-packages\torchtext\_extension.py", line 58, in _init_extension
+    _load_lib("libtorchtext")
+  File "D:\Anaconda\envs\torch\lib\site-packages\torchtext\_extension.py", line 50, in _load_lib
+    torch.ops.load_library(path)
+  File "D:\Anaconda\envs\torch\lib\site-packages\torch\_ops.py", line 1350, in load_library
+    ctypes.CDLL(path)
+  File "D:\Anaconda\envs\torch\lib\ctypes\__init__.py", line 374, in __init__
+    self._handle = _dlopen(self._name, mode)
+OSError: [WinError 127] 找不到指定的程序。
