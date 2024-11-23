@@ -1,16 +1,19 @@
-Traceback (most recent call last):
-  File "D:\桌面\3114_project\Transformer-optimization-demo\transformer.py", line 4, in <module>
-    from torchtext.datasets import IMDB
-  File "D:\Anaconda\envs\torch\lib\site-packages\torchtext\__init__.py", line 18, in <module>
-    from torchtext import _extension  # noqa: F401
-  File "D:\Anaconda\envs\torch\lib\site-packages\torchtext\_extension.py", line 64, in <module>
-    _init_extension()
-  File "D:\Anaconda\envs\torch\lib\site-packages\torchtext\_extension.py", line 58, in _init_extension
-    _load_lib("libtorchtext")
-  File "D:\Anaconda\envs\torch\lib\site-packages\torchtext\_extension.py", line 50, in _load_lib
-    torch.ops.load_library(path)
-  File "D:\Anaconda\envs\torch\lib\site-packages\torch\_ops.py", line 1350, in load_library
-    ctypes.CDLL(path)
-  File "D:\Anaconda\envs\torch\lib\ctypes\__init__.py", line 374, in __init__
-    self._handle = _dlopen(self._name, mode)
-OSError: [WinError 127] 找不到指定的程序。
+Warnings:
+D:\Anaconda\envs\torch\lib\site-packages\torch\nn\modules\transformer.py:306: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.self_attn.batch_first was not True(use batch_first for better inference performance)
+  warnings.warn(f"enable_nested_tensor is True, but self.use_nested_tensor is False because {why_not_sparsity_fast_path}")
+D:\Anaconda\envs\torch\lib\site-packages\torch\nn\functional.py:5504: UserWarning: 1Torch was not compiled with flash attention. (Triggered internally at C:\actions-runner\_work\pytorch\pytorch\builder\windows\pytorch\aten\src\ATen\native\transformers\cuda\sdp_utils.cpp:455.)
+  attn_output = scaled_dot_product_attention(q, k, v, attn_mask, dropout_p, is_causal)
+
+Results:
+Training with SGD
+Epoch 1/5: Train Loss: 0.0212, Train Acc: 0.9984, Test Loss: 0.0018, Test Acc: 1.0000
+Epoch 2/5: Train Loss: 0.0012, Train Acc: 1.0000, Test Loss: 0.0008, Test Acc: 1.0000
+Epoch 3/5: Train Loss: 0.0007, Train Acc: 1.0000, Test Loss: 0.0005, Test Acc: 1.0000
+Epoch 4/5: Train Loss: 0.0004, Train Acc: 1.0000, Test Loss: 0.0003, Test Acc: 1.0000
+Epoch 5/5: Train Loss: 0.0003, Train Acc: 1.0000, Test Loss: 0.0003, Test Acc: 1.0000
+Training with Adam
+Epoch 1/5: Train Loss: 0.0000, Train Acc: 1.0000, Test Loss: 0.0000, Test Acc: 1.0000
+Epoch 2/5: Train Loss: 0.0000, Train Acc: 1.0000, Test Loss: 0.0000, Test Acc: 1.0000
+Epoch 3/5: Train Loss: 0.0000, Train Acc: 1.0000, Test Loss: 0.0000, Test Acc: 1.0000
+Epoch 4/5: Train Loss: 0.0000, Train Acc: 1.0000, Test Loss: 0.0000, Test Acc: 1.0000
+Epoch 5/5: Train Loss: 0.0000, Train Acc: 1.0000, Test Loss: 0.0000, Test Acc: 1.0000
