@@ -1,4 +1,5 @@
 import torch
+torch.utils.data.datapipes.utils.common.DILL_AVAILABLE = torch.utils._import_utils.dill_available()
 from torch import nn
 from torch.utils.data import DataLoader
 from torchtext.datasets import IMDB

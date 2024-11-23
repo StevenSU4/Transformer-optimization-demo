@@ -1,1 +1,12 @@
-ImportError: cannot import name 'DILL_AVAILABLE' from 'torch.utils.data.datapipes.utils.common' (D:\Anaconda\envs\torch\lib\site-packages\torch\utils\data\datapipes\utils\common.py) 
+Training with SGD
+Epoch 1/5: Train Loss: 0.0212, Train Acc: 0.9984, Test Loss: 0.0018, Test Acc: 1.0000
+Epoch 2/5: Train Loss: 0.0012, Train Acc: 1.0000, Test Loss: 0.0008, Test Acc: 1.0000
+Epoch 3/5: Train Loss: 0.0007, Train Acc: 1.0000, Test Loss: 0.0005, Test Acc: 1.0000
+Epoch 4/5: Train Loss: 0.0004, Train Acc: 1.0000, Test Loss: 0.0003, Test Acc: 1.0000
+Epoch 5/5: Train Loss: 0.0003, Train Acc: 1.0000, Test Loss: 0.0003, Test Acc: 1.0000
+Training with Adam
+Epoch 1/5: Train Loss: 0.0000, Train Acc: 1.0000, Test Loss: 0.0000, Test Acc: 1.0000
+Epoch 2/5: Train Loss: 0.0000, Train Acc: 1.0000, Test Loss: 0.0000, Test Acc: 1.0000
+Epoch 3/5: Train Loss: 0.0000, Train Acc: 1.0000, Test Loss: 0.0000, Test Acc: 1.0000
+Epoch 4/5: Train Loss: 0.0000, Train Acc: 1.0000, Test Loss: 0.0000, Test Acc: 1.0000
+Epoch 5/5: Train Loss: 0.0000, Train Acc: 1.0000, Test Loss: 0.0000, Test Acc: 1.0000
