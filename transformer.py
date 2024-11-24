@@ -20,6 +20,9 @@ dataset = datasets.load_dataset('imdb')
 train_iter = dataset['train']
 test_iter = dataset['test']
 
+# print(f"{list(train_iter)[0]}")
+# print(f"{list(test_iter)[0]}")
+
 # Tokenizer
 tokenizer = get_tokenizer("basic_english")
 
@@ -37,11 +40,17 @@ MAX_SEQ_LEN = 128  # Max length of sequences
 
 # Collate function for DataLoader
 def collate_batch(batch):
-    labels, texts = zip(*batch)
-    labels = torch.tensor([1 if label == 'pos' else 0 for label in labels])
+    texts, labels = zip(*[(item['text'], item['label']) for item in batch]) 
+    labels = torch.tensor(labels) 
     tokenized_texts = [torch.tensor(vocab(tokenizer(text)))[:MAX_SEQ_LEN] for text in texts]
     padded_texts = nn.utils.rnn.pad_sequence(tokenized_texts, batch_first=True, padding_value=vocab["<pad>"])
     return padded_texts, labels
+# def collate_batch(batch):
+#     labels, texts = zip(*batch)
+#     labels = torch.tensor([1 if label == 'pos' else 0 for label in labels])
+#     tokenized_texts = [torch.tensor(vocab(tokenizer(text)))[:MAX_SEQ_LEN] for text in texts]
+#     padded_texts = nn.utils.rnn.pad_sequence(tokenized_texts, batch_first=True, padding_value=vocab["<pad>"])
+#     return padded_texts, labels
 
 # Dataloaders
 train_loader = DataLoader(list(train_iter), batch_size=BATCH_SIZE, shuffle=True, collate_fn=collate_batch)
@@ -66,10 +75,10 @@ class TransformerModel(nn.Module):
         return self.fc(x)
 
 # Initialize model
-EMBED_SIZE = 32
-NUM_HEADS = 2
-HIDDEN_DIM = 64
-NUM_LAYERS = 1
+EMBED_SIZE = 64
+NUM_HEADS = 4
+HIDDEN_DIM = 128
+NUM_LAYERS = 2
 NUM_CLASSES = 2  # Binary classification
 
 model_for_sgd = TransformerModel(len(vocab), EMBED_SIZE, NUM_HEADS, HIDDEN_DIM, NUM_LAYERS, NUM_CLASSES).to(device)
@@ -79,7 +88,7 @@ model_for_adam = TransformerModel(len(vocab), EMBED_SIZE, NUM_HEADS, HIDDEN_DIM,
 criterion = nn.CrossEntropyLoss()
 
 # Optimizers
-optimizer_sgd = torch.optim.SGD(model_for_sgd.parameters(), lr=0.01)
+optimizer_sgd = torch.optim.SGD(model_for_sgd.parameters(), lr=0.1)
 optimizer_adam = torch.optim.Adam(model_for_adam.parameters(), lr=0.001, betas=(0.9, 0.999), weight_decay=0)
 # optimize_adam_mini = Adam_mini(
 #     named_parameters=model.named_parameters(),
@@ -125,7 +134,7 @@ def evaluate_model(model, dataloader, criterion):
     return total_loss / len(dataloader), total_acc / len(dataloader.dataset)
 
 # Training process
-EPOCHS = 3
+EPOCHS = 5
 # for optimizer in [optimizer_sgd, optimizer_adam]:
 #     print(f"Training with {optimizer.__class__.__name__}")
 #     for epoch in range(EPOCHS):
