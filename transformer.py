@@ -2,7 +2,6 @@ import torch
 torch.utils.data.datapipes.utils.common.DILL_AVAILABLE = torch.utils._import_utils.dill_available()
 from torch import nn
 from torch.utils.data import DataLoader
-from torchtext.datasets import IMDB
 from torchtext.data.utils import get_tokenizer
 from torchtext.vocab import build_vocab_from_iterator
 from adam_mini import Adam_mini
@@ -14,7 +13,12 @@ torchtext.disable_torchtext_deprecation_warning()
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Load IMDb dataset
-train_iter, test_iter = IMDB(split=('train', 'test'))
+# from torchtext.datasets import IMDB
+# train_iter, test_iter = IMDB(split=('train', 'test'))
+import datasets
+dataset = datasets.load_dataset('imdb')
+train_iter = dataset['train']
+test_iter = dataset['test']
 
 # Tokenizer
 tokenizer = get_tokenizer("basic_english")
@@ -68,14 +72,15 @@ HIDDEN_DIM = 64
 NUM_LAYERS = 1
 NUM_CLASSES = 2  # Binary classification
 
-model = TransformerModel(len(vocab), EMBED_SIZE, NUM_HEADS, HIDDEN_DIM, NUM_LAYERS, NUM_CLASSES).to(device)
+model_for_sgd = TransformerModel(len(vocab), EMBED_SIZE, NUM_HEADS, HIDDEN_DIM, NUM_LAYERS, NUM_CLASSES).to(device)
+model_for_adam = TransformerModel(len(vocab), EMBED_SIZE, NUM_HEADS, HIDDEN_DIM, NUM_LAYERS, NUM_CLASSES).to(device)
 
 # Loss function
 criterion = nn.CrossEntropyLoss()
 
 # Optimizers
-optimizer_sgd = torch.optim.SGD(model.parameters(), lr=0.01)
-optimizer_adam = torch.optim.Adam(model.parameters(), lr=0.001, betas=(0.9, 0.999), weight_decay=0)
+optimizer_sgd = torch.optim.SGD(model_for_sgd.parameters(), lr=0.01)
+optimizer_adam = torch.optim.Adam(model_for_adam.parameters(), lr=0.001, betas=(0.9, 0.999), weight_decay=0)
 # optimize_adam_mini = Adam_mini(
 #     named_parameters=model.named_parameters(),
 #     lr=0.001,
@@ -121,9 +126,21 @@ def evaluate_model(model, dataloader, criterion):
 
 # Training process
 EPOCHS = 3
-for optimizer in [optimizer_sgd, optimizer_adam]:
-    print(f"Training with {optimizer.__class__.__name__}")
-    for epoch in range(EPOCHS):
-        train_loss, train_acc = train_model(model, train_loader, optimizer, criterion)
-        test_loss, test_acc = evaluate_model(model, test_loader, criterion)
-        print(f"Epoch {epoch+1}/{EPOCHS}: Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.4f}, Test Loss: {test_loss:.4f}, Test Acc: {test_acc:.4f}")
+# for optimizer in [optimizer_sgd, optimizer_adam]:
+#     print(f"Training with {optimizer.__class__.__name__}")
+#     for epoch in range(EPOCHS):
+#         train_loss, train_acc = train_model(model, train_loader, optimizer, criterion)
+#         test_loss, test_acc = evaluate_model(model, test_loader, criterion)
+#         print(f"Epoch {epoch+1}/{EPOCHS}: Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.4f}, Test Loss: {test_loss:.4f}, Test Acc: {test_acc:.4f}")
+
+print(f"Training with SGD.")
+for epoch in range(EPOCHS):
+    train_loss, train_acc = train_model(model_for_sgd, train_loader, optimizer_sgd, criterion)
+    test_loss, test_acc = evaluate_model(model_for_sgd, test_loader, criterion)
+    print(f"Epoch {epoch+1}/{EPOCHS}: Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.4f}, Test Loss: {test_loss:.4f}, Test Acc: {test_acc:.4f}")
+    
+print(f"Training with Adam.")
+for epoch in range(EPOCHS):
+    train_loss, train_acc = train_model(model_for_adam, train_loader, optimizer_adam, criterion)
+    test_loss, test_acc = evaluate_model(model_for_adam, test_loader, criterion)
+    print(f"Epoch {epoch+1}/{EPOCHS}: Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.4f}, Test Loss: {test_loss:.4f}, Test Acc: {test_acc:.4f}")
