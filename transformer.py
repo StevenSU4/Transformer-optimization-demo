@@ -88,13 +88,16 @@ model_for_sgd = TransformerModel(len(vocab), EMBED_SIZE, NUM_HEADS, HIDDEN_DIM, 
 model_for_adam = TransformerModel(len(vocab), EMBED_SIZE, NUM_HEADS, HIDDEN_DIM, NUM_LAYERS, NUM_CLASSES).to(device)
 model_for_adam_mini = TransformerModel(len(vocab), EMBED_SIZE, NUM_HEADS, HIDDEN_DIM, NUM_LAYERS, NUM_CLASSES).to(device)
 
+# for name, param in model_for_adam_mini.named_parameters():
+#     print(name)
+    
 # Loss function
 criterion = nn.CrossEntropyLoss()
 
 # Optimizers
-sgd_lr = 0.1
-optimizer_sgd = torch.optim.SGD(model_for_sgd.parameters(), lr=sgd_lr)
-optimizer_adam = torch.optim.Adam(model_for_adam.parameters(), lr=0.001, betas=(0.9, 0.999), weight_decay=0)
+# sgd_lr = 0.1
+# optimizer_sgd = torch.optim.SGD(model_for_sgd.parameters(), lr=sgd_lr)
+# optimizer_adam = torch.optim.Adam(model_for_adam.parameters(), lr=0.001, betas=(0.9, 0.999), weight_decay=0)
 optimize_adam_mini = Adam_mini(
     named_parameters=model_for_adam_mini.named_parameters(),
     lr=0.001,
@@ -104,6 +107,16 @@ optimize_adam_mini = Adam_mini(
     dim=EMBED_SIZE,
     n_heads=NUM_HEADS,
     n_kv_heads=NUM_HEADS,)
+
+optimize_adam_mini.embd_names.add('embedding')
+optimize_adam_mini.output_names.add('fc') 
+optimize_adam_mini.wqk_names.add('in_proj_weight')
+optimize_adam_mini.wv_names.add('in_proj_weight')
+optimize_adam_mini.attn_proj_names.add('out_proj')
+optimize_adam_mini.attn_proj_names.add('out_proj')
+optimize_adam_mini.mlp_names.add('linear1') 
+optimize_adam_mini.mlp_names.add('linear2')
+optimize_adam_mini.wv_names.add('in_proj_weight')
 
 def train_model(model, dataloader, optimizer, criterion):
     model.train()
