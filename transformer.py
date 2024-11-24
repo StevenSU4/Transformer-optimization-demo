@@ -5,8 +5,6 @@ from torch.utils.data import DataLoader
 from torchtext.data.utils import get_tokenizer
 from torchtext.vocab import build_vocab_from_iterator
 from lion_pytorch import Lion
-import torch.nn.functional as F
-from sophia import SophiaG
 
 import torchtext
 torchtext.disable_torchtext_deprecation_warning()
@@ -85,7 +83,7 @@ sgd_lr = 0.1
 optimizer_sgd = torch.optim.SGD(model_for_sgd.parameters(), lr=sgd_lr)
 optimizer_adam = torch.optim.Adam(model_for_adam.parameters(), lr=0.001, betas=(0.9, 0.999), weight_decay=2e-3)
 optimizer_lion = Lion(model_for_lion.parameters(), lr=2e-4, weight_decay=1e-2)
-optimizer_sophia = SophiaG(model_for_sophia.parameters(), lr=8e-4, betas=(0.9, 0.999), weight_decay=4e-3)
+
 
 def train_model(model, dataloader, optimizer, criterion):
     model.train()
@@ -120,27 +118,6 @@ def evaluate_model(model, dataloader, criterion):
             total_acc += (outputs.argmax(dim=1) == labels).sum().item()
     return total_loss / len(dataloader), total_acc / len(dataloader.dataset)
 
-# Training process
-# MAX_EPOCHS = 50
-
-# print(f"Training with SGD of lr={sgd_lr}.")
-# for epoch in range(EPOCHS):
-#     train_loss, train_acc = train_model(model_for_sgd, train_loader, optimizer_sgd, criterion)
-#     test_loss, test_acc = evaluate_model(model_for_sgd, test_loader, criterion)
-#     print(f"Epoch {epoch+1}/{EPOCHS}: Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.4f}, Test Loss: {test_loss:.4f}, Test Acc: {test_acc:.4f}")
-    
-# print(f"Training with Adam.")
-# for epoch in range(EPOCHS):
-#     train_loss, train_acc = train_model(model_for_adam, train_loader, optimizer_adam, criterion)
-#     test_loss, test_acc = evaluate_model(model_for_adam, test_loader, criterion)
-#     print(f"Epoch {epoch+1}/{EPOCHS}: Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.4f}, Test Loss: {test_loss:.4f}, Test Acc: {test_acc:.4f}")
-
-# print(f"Training with Lion.")
-# for epoch in range(EPOCHS):
-#     train_loss, train_acc = train_model(model_for_lion, train_loader, optimizer_lion, criterion)
-#     test_loss, test_acc = evaluate_model(model_for_lion, test_loader, criterion)
-#     print(f"Epoch {epoch+1}/{EPOCHS}: Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.4f}, Test Loss: {test_loss:.4f}, Test Acc: {test_acc:.4f}")
-
 
 # Training process
 MAX_EPOCHS = 50
@@ -163,52 +140,3 @@ train_with_early_stopping(model_for_adam, train_loader, test_loader, optimizer_a
 
 print(f"Training with Lion.")
 train_with_early_stopping(model_for_lion, train_loader, test_loader, optimizer_lion, criterion, MAX_EPOCHS)
-
-print(f"Training with Sophia.")
-
-block_size = 1  # Adjust based on your data loader
-k = 10
-iter_num = -1
-
-def train_with_sophia(model, train_loader, optimizer, criterion, max_epochs, block_size, k):
-    total_bs = len(train_loader) * block_size
-    for epoch in range(max_epochs):
-        model.train()
-        total_loss, total_acc = 0, 0
-        for texts, labels in train_loader:
-            texts, labels = texts.to(device), labels.to(device)
-
-            # Forward pass
-            outputs = model(texts)
-            loss = criterion(outputs, labels)
-
-            # Backward pass and optimization
-            loss.backward()
-            optimizer.step(bs=total_bs)
-            optimizer.zero_grad(set_to_none=True)
-            iter_num += 1
-
-            # Metrics
-            total_loss += loss.item()
-            total_acc += (outputs.argmax(dim=1) == labels).sum().item()
-
-            if iter_num % k != k - 1:
-                continue
-            else:
-                # Update Hessian EMA
-                outputs = model(texts)
-                samp_dist = torch.distributions.Categorical(logits=outputs)
-                y_sample = samp_dist.sample()
-                loss_sampled = F.cross_entropy(outputs.view(-1, outputs.size(-1)), y_sample.view(-1), ignore_index=-1)
-                loss_sampled.backward()
-                optimizer.update_hessian()
-                optimizer.zero_grad(set_to_none=True)
-                model.zero_grad()
-
-        print(f"Epoch {epoch+1}/{max_epochs}: Train Loss: {total_loss / len(train_loader):.4f}, Train Acc: {total_acc / len(train_loader.dataset):.4f}")
-        
-        if (total_loss / len(train_loader)) < 0.1:
-            print("Already converged.")
-            break
-
-train_with_sophia(model_for_sophia, train_loader, optimizer_sophia, criterion, MAX_EPOCHS, block_size, k)
