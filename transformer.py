@@ -44,12 +44,13 @@ train_loader = DataLoader(list(train_iter), batch_size=BATCH_SIZE, shuffle=True,
 test_loader = DataLoader(list(test_iter), batch_size=BATCH_SIZE, shuffle=False, collate_fn=collate_batch)
 
 class TransformerModel(nn.Module):
-    def __init__(self, vocab_size, embed_size, num_heads, hidden_dim, num_layers, num_classes, dropout=0.1):
+    def __init__(self, vocab_size, embed_size, num_heads, hidden_dim, num_layers, num_classes, dropout=0.2):
         super(TransformerModel, self).__init__()
         self.embedding = nn.Embedding(vocab_size, embed_size)
         self.positional_encoding = nn.Parameter(torch.zeros(1, MAX_SEQ_LEN, embed_size))
         encoder_layer = nn.TransformerEncoderLayer(d_model=embed_size, nhead=num_heads, dim_feedforward=hidden_dim, dropout=dropout)
         self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=num_layers)
+        self.dropout = nn.Dropout(dropout)
         self.fc = nn.Linear(embed_size, num_classes)
 
     def forward(self, x):
@@ -57,13 +58,14 @@ class TransformerModel(nn.Module):
         x = self.embedding(x) + self.positional_encoding[:, :x.size(1), :]
         x = self.transformer(x.permute(1, 0, 2))  # [Seq, Batch, Embed]
         x = x.mean(dim=0)  # Pooling over sequence
+        x = self.dropout(x)
         return self.fc(x)
 
 # Initialize model
-EMBED_SIZE = 64
-NUM_HEADS = 4
-HIDDEN_DIM = 128
-NUM_LAYERS = 2
+EMBED_SIZE = 32
+NUM_HEADS = 2
+HIDDEN_DIM = 64
+NUM_LAYERS = 1
 NUM_CLASSES = 2  # Binary classification
 
 model = TransformerModel(len(vocab), EMBED_SIZE, NUM_HEADS, HIDDEN_DIM, NUM_LAYERS, NUM_CLASSES).to(device)
@@ -73,17 +75,16 @@ criterion = nn.CrossEntropyLoss()
 
 # Optimizers
 optimizer_sgd = torch.optim.SGD(model.parameters(), lr=0.01)
-# optimizer_adam = torch.optim.Adam(model.parameters(), lr=0.001)
 optimizer_adam = torch.optim.Adam(model.parameters(), lr=0.001, betas=(0.9, 0.999), weight_decay=0)
-optimize_adam_mini = Adam_mini(
-    named_parameters=model.named_parameters(),
-    lr=0.001,
-    betas=(0.9, 0.999),
-    eps=1e-8,
-    weight_decay=0,
-    dim=EMBED_SIZE,
-    n_heads=NUM_HEADS,
-    n_kv_heads=NUM_HEADS,)
+# optimize_adam_mini = Adam_mini(
+#     named_parameters=model.named_parameters(),
+#     lr=0.001,
+#     betas=(0.9, 0.999),
+#     eps=1e-8,
+#     weight_decay=0,
+#     dim=EMBED_SIZE,
+#     n_heads=NUM_HEADS,
+#     n_kv_heads=NUM_HEADS,)
 
 def train_model(model, dataloader, optimizer, criterion):
     model.train()
@@ -119,8 +120,8 @@ def evaluate_model(model, dataloader, criterion):
     return total_loss / len(dataloader), total_acc / len(dataloader.dataset)
 
 # Training process
-EPOCHS = 5
-for optimizer in [optimizer_sgd, optimizer_adam, optimize_adam_mini]:
+EPOCHS = 3
+for optimizer in [optimizer_sgd, optimizer_adam]:
     print(f"Training with {optimizer.__class__.__name__}")
     for epoch in range(EPOCHS):
         train_loss, train_acc = train_model(model, train_loader, optimizer, criterion)
