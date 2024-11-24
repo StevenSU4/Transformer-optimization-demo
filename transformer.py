@@ -27,9 +27,12 @@ test_iter = dataset['test']
 tokenizer = get_tokenizer("basic_english")
 
 # Build vocabulary
-def yield_tokens(data_iter):
-    for _, text in data_iter:
-        yield tokenizer(text)
+def yield_tokens(data_iter): 
+    for item in data_iter: 
+        yield tokenizer(item['text'])
+# def yield_tokens(data_iter):
+#     for _, text in data_iter:
+#         yield tokenizer(text)
 
 vocab = build_vocab_from_iterator(yield_tokens(train_iter), specials=["<pad>", "<unk>"])
 vocab.set_default_index(vocab["<unk>"])  # Handle unknown tokens
@@ -83,22 +86,24 @@ NUM_CLASSES = 2  # Binary classification
 
 model_for_sgd = TransformerModel(len(vocab), EMBED_SIZE, NUM_HEADS, HIDDEN_DIM, NUM_LAYERS, NUM_CLASSES).to(device)
 model_for_adam = TransformerModel(len(vocab), EMBED_SIZE, NUM_HEADS, HIDDEN_DIM, NUM_LAYERS, NUM_CLASSES).to(device)
+model_for_adam_mini = TransformerModel(len(vocab), EMBED_SIZE, NUM_HEADS, HIDDEN_DIM, NUM_LAYERS, NUM_CLASSES).to(device)
 
 # Loss function
 criterion = nn.CrossEntropyLoss()
 
 # Optimizers
-optimizer_sgd = torch.optim.SGD(model_for_sgd.parameters(), lr=0.1)
+sgd_lr = 0.1
+optimizer_sgd = torch.optim.SGD(model_for_sgd.parameters(), lr=sgd_lr)
 optimizer_adam = torch.optim.Adam(model_for_adam.parameters(), lr=0.001, betas=(0.9, 0.999), weight_decay=0)
-# optimize_adam_mini = Adam_mini(
-#     named_parameters=model.named_parameters(),
-#     lr=0.001,
-#     betas=(0.9, 0.999),
-#     eps=1e-8,
-#     weight_decay=0,
-#     dim=EMBED_SIZE,
-#     n_heads=NUM_HEADS,
-#     n_kv_heads=NUM_HEADS,)
+optimize_adam_mini = Adam_mini(
+    named_parameters=model_for_adam_mini.named_parameters(),
+    lr=0.001,
+    betas=(0.9, 0.999),
+    eps=1e-8,
+    weight_decay=0,
+    dim=EMBED_SIZE,
+    n_heads=NUM_HEADS,
+    n_kv_heads=NUM_HEADS,)
 
 def train_model(model, dataloader, optimizer, criterion):
     model.train()
@@ -134,7 +139,7 @@ def evaluate_model(model, dataloader, criterion):
     return total_loss / len(dataloader), total_acc / len(dataloader.dataset)
 
 # Training process
-EPOCHS = 5
+EPOCHS = 10
 # for optimizer in [optimizer_sgd, optimizer_adam]:
 #     print(f"Training with {optimizer.__class__.__name__}")
 #     for epoch in range(EPOCHS):
@@ -142,14 +147,20 @@ EPOCHS = 5
 #         test_loss, test_acc = evaluate_model(model, test_loader, criterion)
 #         print(f"Epoch {epoch+1}/{EPOCHS}: Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.4f}, Test Loss: {test_loss:.4f}, Test Acc: {test_acc:.4f}")
 
-print(f"Training with SGD.")
-for epoch in range(EPOCHS):
-    train_loss, train_acc = train_model(model_for_sgd, train_loader, optimizer_sgd, criterion)
-    test_loss, test_acc = evaluate_model(model_for_sgd, test_loader, criterion)
-    print(f"Epoch {epoch+1}/{EPOCHS}: Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.4f}, Test Loss: {test_loss:.4f}, Test Acc: {test_acc:.4f}")
+# print(f"Training with SGD of lr={sgd_lr}.")
+# for epoch in range(EPOCHS):
+#     train_loss, train_acc = train_model(model_for_sgd, train_loader, optimizer_sgd, criterion)
+#     test_loss, test_acc = evaluate_model(model_for_sgd, test_loader, criterion)
+#     print(f"Epoch {epoch+1}/{EPOCHS}: Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.4f}, Test Loss: {test_loss:.4f}, Test Acc: {test_acc:.4f}")
     
-print(f"Training with Adam.")
+# print(f"Training with Adam.")
+# for epoch in range(EPOCHS):
+#     train_loss, train_acc = train_model(model_for_adam, train_loader, optimizer_adam, criterion)
+#     test_loss, test_acc = evaluate_model(model_for_adam, test_loader, criterion)
+#     print(f"Epoch {epoch+1}/{EPOCHS}: Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.4f}, Test Loss: {test_loss:.4f}, Test Acc: {test_acc:.4f}")
+
+print(f"Training with Adam_mini.")
 for epoch in range(EPOCHS):
-    train_loss, train_acc = train_model(model_for_adam, train_loader, optimizer_adam, criterion)
-    test_loss, test_acc = evaluate_model(model_for_adam, test_loader, criterion)
+    train_loss, train_acc = train_model(model_for_adam_mini, train_loader, optimize_adam_mini, criterion)
+    test_loss, test_acc = evaluate_model(model_for_adam_mini, test_loader, criterion)
     print(f"Epoch {epoch+1}/{EPOCHS}: Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.4f}, Test Loss: {test_loss:.4f}, Test Acc: {test_acc:.4f}")
