@@ -5,6 +5,7 @@ from torch.utils.data import DataLoader
 from torchtext.datasets import IMDB
 from torchtext.data.utils import get_tokenizer
 from torchtext.vocab import build_vocab_from_iterator
+from adam_mini import Adam_mini
 
 import torchtext
 torchtext.disable_torchtext_deprecation_warning()
@@ -39,8 +40,8 @@ def collate_batch(batch):
     return padded_texts, labels
 
 # Dataloaders
-train_loader = DataLoader(list(IMDB(split='train')), batch_size=BATCH_SIZE, shuffle=True, collate_fn=collate_batch)
-test_loader = DataLoader(list(IMDB(split='test')), batch_size=BATCH_SIZE, shuffle=False, collate_fn=collate_batch)
+train_loader = DataLoader(list(train_iter), batch_size=BATCH_SIZE, shuffle=True, collate_fn=collate_batch)
+test_loader = DataLoader(list(test_iter), batch_size=BATCH_SIZE, shuffle=False, collate_fn=collate_batch)
 
 class TransformerModel(nn.Module):
     def __init__(self, vocab_size, embed_size, num_heads, hidden_dim, num_layers, num_classes, dropout=0.1):
@@ -72,7 +73,17 @@ criterion = nn.CrossEntropyLoss()
 
 # Optimizers
 optimizer_sgd = torch.optim.SGD(model.parameters(), lr=0.01)
-optimizer_adam = torch.optim.Adam(model.parameters(), lr=0.001)
+# optimizer_adam = torch.optim.Adam(model.parameters(), lr=0.001)
+optimizer_adam = torch.optim.Adam(model.parameters(), lr=0.001, betas=(0.9, 0.999), weight_decay=0)
+optimize_adam_mini = Adam_mini(
+    named_parameters=model.named_parameters(),
+    lr=0.001,
+    betas=(0.9, 0.999),
+    eps=1e-8,
+    weight_decay=0,
+    dim=EMBED_SIZE,
+    n_heads=NUM_HEADS,
+    n_kv_heads=NUM_HEADS,)
 
 def train_model(model, dataloader, optimizer, criterion):
     model.train()
@@ -109,7 +120,7 @@ def evaluate_model(model, dataloader, criterion):
 
 # Training process
 EPOCHS = 5
-for optimizer in [optimizer_sgd, optimizer_adam]:
+for optimizer in [optimizer_sgd, optimizer_adam, optimize_adam_mini]:
     print(f"Training with {optimizer.__class__.__name__}")
     for epoch in range(EPOCHS):
         train_loss, train_acc = train_model(model, train_loader, optimizer, criterion)
