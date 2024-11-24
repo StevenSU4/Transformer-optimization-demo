@@ -4,7 +4,7 @@ from torch import nn
 from torch.utils.data import DataLoader
 from torchtext.data.utils import get_tokenizer
 from torchtext.vocab import build_vocab_from_iterator
-from adam_mini import Adam_mini
+from lion_pytorch import Lion
 
 import torchtext
 torchtext.disable_torchtext_deprecation_warning()
@@ -72,10 +72,7 @@ NUM_CLASSES = 2  # Binary classification
 
 model_for_sgd = TransformerModel(len(vocab), EMBED_SIZE, NUM_HEADS, HIDDEN_DIM, NUM_LAYERS, NUM_CLASSES).to(device)
 model_for_adam = TransformerModel(len(vocab), EMBED_SIZE, NUM_HEADS, HIDDEN_DIM, NUM_LAYERS, NUM_CLASSES).to(device)
-model_for_adam_mini = TransformerModel(len(vocab), EMBED_SIZE, NUM_HEADS, HIDDEN_DIM, NUM_LAYERS, NUM_CLASSES).to(device)
-
-# for name, param in model_for_adam_mini.named_parameters():
-#     print(name)
+model_for_lion = TransformerModel(len(vocab), EMBED_SIZE, NUM_HEADS, HIDDEN_DIM, NUM_LAYERS, NUM_CLASSES).to(device)
     
 # Loss function
 criterion = nn.CrossEntropyLoss()
@@ -83,26 +80,8 @@ criterion = nn.CrossEntropyLoss()
 # Optimizers
 sgd_lr = 0.1
 optimizer_sgd = torch.optim.SGD(model_for_sgd.parameters(), lr=sgd_lr)
-optimizer_adam = torch.optim.Adam(model_for_adam.parameters(), lr=0.001, betas=(0.9, 0.999), weight_decay=0)
-optimize_adam_mini = Adam_mini(
-    named_parameters=model_for_adam_mini.named_parameters(),
-    lr=0.001,
-    betas=(0.9, 0.999),
-    eps=1e-8,
-    weight_decay=0,
-    dim=EMBED_SIZE,
-    n_heads=NUM_HEADS,
-    n_kv_heads=NUM_HEADS,)
-
-optimize_adam_mini.embd_names.add('embedding')
-optimize_adam_mini.output_names.add('fc') 
-optimize_adam_mini.wqk_names.add('in_proj_weight')
-optimize_adam_mini.wv_names.add('in_proj_weight')
-optimize_adam_mini.attn_proj_names.add('out_proj')
-optimize_adam_mini.attn_proj_names.add('out_proj')
-optimize_adam_mini.mlp_names.add('linear1') 
-optimize_adam_mini.mlp_names.add('linear2')
-optimize_adam_mini.wv_names.add('in_proj_weight')
+optimizer_adam = torch.optim.Adam(model_for_adam.parameters(), lr=0.001, betas=(0.9, 0.999), weight_decay=1e-3)
+optimizer_lion = Lion(model_for_lion.parameters(), lr=1e-4, weight_decay=1e-2)
 
 def train_model(model, dataloader, optimizer, criterion):
     model.train()
@@ -146,14 +125,14 @@ EPOCHS = 10
 #     test_loss, test_acc = evaluate_model(model_for_sgd, test_loader, criterion)
 #     print(f"Epoch {epoch+1}/{EPOCHS}: Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.4f}, Test Loss: {test_loss:.4f}, Test Acc: {test_acc:.4f}")
     
-# print(f"Training with Adam.")
-# for epoch in range(EPOCHS):
-#     train_loss, train_acc = train_model(model_for_adam, train_loader, optimizer_adam, criterion)
-#     test_loss, test_acc = evaluate_model(model_for_adam, test_loader, criterion)
-#     print(f"Epoch {epoch+1}/{EPOCHS}: Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.4f}, Test Loss: {test_loss:.4f}, Test Acc: {test_acc:.4f}")
-
-print(f"Training with Adam_mini.")
+print(f"Training with Adam.")
 for epoch in range(EPOCHS):
-    train_loss, train_acc = train_model(model_for_adam_mini, train_loader, optimize_adam_mini, criterion)
-    test_loss, test_acc = evaluate_model(model_for_adam_mini, test_loader, criterion)
+    train_loss, train_acc = train_model(model_for_adam, train_loader, optimizer_adam, criterion)
+    test_loss, test_acc = evaluate_model(model_for_adam, test_loader, criterion)
+    print(f"Epoch {epoch+1}/{EPOCHS}: Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.4f}, Test Loss: {test_loss:.4f}, Test Acc: {test_acc:.4f}")
+
+print(f"Training with Lion.")
+for epoch in range(EPOCHS):
+    train_loss, train_acc = train_model(model_for_lion, train_loader, optimizer_lion, criterion)
+    test_loss, test_acc = evaluate_model(model_for_lion, test_loader, criterion)
     print(f"Epoch {epoch+1}/{EPOCHS}: Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.4f}, Test Loss: {test_loss:.4f}, Test Acc: {test_acc:.4f}")
