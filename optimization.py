@@ -5,19 +5,25 @@ from adam_mini import Adam_mini
 
 model = nn.Linear(2, 1)
 
+EMBED_SIZE = 64
+NUM_HEADS = 4
+HIDDEN_DIM = 128
+NUM_LAYERS = 2
+NUM_CLASSES = 2  # Binary classification
+
 criterion = nn.MSELoss()
 
-optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
+optimizer = optim.SGD(model.parameters(), lr=0.01)
 optimizer = optim.Adam(model.parameters(), lr=0.001, betas=(0.9, 0.999), weight_decay=0)
 optimizer = Adam_mini(
     named_parameters=model.named_parameters(),
-    lr=lr,
-    betas=(beta1, beta2),
-    eps=eps,
-    weight_decay=weight_decay,
-    # dim=model_config.dim,
-    # n_heads=model_config.n_heads,
-    # n_kv_heads=model_config.n_kv_heads,
+    lr=0.001,
+    betas=(0.9, 0.999),
+    eps=1e-8,
+    weight_decay=0,
+    dim=EMBED_SIZE,
+    n_heads=NUM_HEADS,
+    n_kv_heads=NUM_HEADS,
 )
 
 
