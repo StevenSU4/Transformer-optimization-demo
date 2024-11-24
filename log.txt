@@ -28,21 +28,8 @@ Adam-mini found the param block with name: transformer.layers.1.norm2.weight tor
 Adam-mini found the param block with name: transformer.layers.1.norm2.bias torch.Size([64])
 Adam-mini found the param block with name: fc.weight torch.Size([2, 64])
 Adam-mini found the param block with name: fc.bias torch.Size([2])
-Training with SGD
 D:\Anaconda\envs\torch\lib\site-packages\torch\nn\functional.py:5504: UserWarning: 1Torch was not compiled with flash attention. (Triggered internally at C:\actions-runner\_work\pytorch\pytorch\builder\windows\pytorch\aten\src\ATen\native\transformers\cuda\sdp_utils.cpp:455.)
   attn_output = scaled_dot_product_attention(q, k, v, attn_mask, dropout_p, is_causal)
-Epoch 1/5: Train Loss: 0.0182, Train Acc: 1.0000, Test Loss: 0.0017, Test Acc: 1.0000
-Epoch 2/5: Train Loss: 0.0012, Train Acc: 1.0000, Test Loss: 0.0007, Test Acc: 1.0000
-Epoch 3/5: Train Loss: 0.0006, Train Acc: 1.0000, Test Loss: 0.0005, Test Acc: 1.0000
-Epoch 4/5: Train Loss: 0.0004, Train Acc: 1.0000, Test Loss: 0.0003, Test Acc: 1.0000
-Epoch 5/5: Train Loss: 0.0003, Train Acc: 1.0000, Test Loss: 0.0003, Test Acc: 1.0000
-Training with Adam
-Epoch 1/5: Train Loss: 0.0000, Train Acc: 1.0000, Test Loss: 0.0000, Test Acc: 1.0000
-Epoch 2/5: Train Loss: 0.0000, Train Acc: 1.0000, Test Loss: 0.0000, Test Acc: 1.0000
-Epoch 3/5: Train Loss: 0.0000, Train Acc: 1.0000, Test Loss: 0.0000, Test Acc: 1.0000
-Epoch 4/5: Train Loss: 0.0000, Train Acc: 1.0000, Test Loss: 0.0000, Test Acc: 1.0000
-Epoch 5/5: Train Loss: 0.0000, Train Acc: 1.0000, Test Loss: 0.0000, Test Acc: 1.0000
-Training with Adam_mini
 Adam-mini found 0 embedding layers, 0 output layers; 0 Querys and Keys;  0 Values;  0 attn_proj;  0 MLPs;
 =====>>> Warning by Adam-mini: No embedding layer found. If you are training Transformers, please check the name of your embedding layer and manually add them to 'self.embd_names' of Adam-mini. You can do this by adding an additional line of code: optimizer.embd_names.add('the keywords in the name of your embedding layer').
 =====>>> Warning by Adam-mini: No output layer found. If you are training Transformers (without weight-tying), please check the name of your output layer and manually add them to 'self.output_names' of Adam-mini. You can do this by adding an additional line of code: optimizer.output_names.add('the keywords in the  name of your output layer').  Please ignore this warning if you are using weight-tying.
@@ -52,9 +39,9 @@ Adam-mini found 0 embedding layers, 0 output layers; 0 Querys and Keys;  0 Value
 =====>>>  Warning by Adam-mini: No MLP found. If you are training Transformers, please check the name of your MLP in attention blocks and manually add them to 'self.mlp_names' of Adam-mini. You can do this by adding an additional lines of code: optimizer.attn_proj_names.add('the keywords in the  name of your MLP' ).
 =====>>>  Warning by Adam-mini: you are using default PyTorch partition for Adam-mini. It can cause training instability on large-scale Transformers.
 Traceback (most recent call last):
-  File "D:\桌面\3114_project\Transformer-optimization-demo\transformer.py", line 126, in <module>
-    train_loss, train_acc = train_model(model, train_loader, optimizer, criterion)
-  File "D:\桌面\3114_project\Transformer-optimization-demo\transformer.py", line 101, in train_model
+  File "D:\桌面\3114_project\Transformer-optimization-demo\transformer.py", line 177, in <module>
+    train_loss, train_acc = train_model(model_for_adam_mini, train_loader, optimize_adam_mini, criterion)
+  File "D:\桌面\3114_project\Transformer-optimization-demo\transformer.py", line 134, in train_model
     optimizer.step()
   File "D:\Anaconda\envs\torch\lib\site-packages\torch\optim\optimizer.py", line 391, in wrapper
     out = func(*args, **kwargs)
