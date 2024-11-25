@@ -5,6 +5,7 @@ from torch.utils.data import DataLoader
 from torchtext.data.utils import get_tokenizer
 from torchtext.vocab import build_vocab_from_iterator
 from lion_pytorch import Lion
+import matplotlib.pyplot as plt
 
 import torchtext
 torchtext.disable_torchtext_deprecation_warning()
@@ -119,23 +120,57 @@ def evaluate_model(model, dataloader, criterion):
 
 
 # Training process
-MAX_EPOCHS = 100
+class EarlyStopping:
+    def __init__(self, patience=5, min_delta=0.01):
+        self.patience = patience
+        self.min_delta = min_delta
+        self.best_loss = None
+        self.counter = 0
 
-def train_with_early_stopping(model, train_loader, test_loader, optimizer, criterion, max_epochs):
+    def __call__(self, train_loss):
+        if self.best_loss is None:
+            self.best_loss = train_loss
+        elif train_loss < self.best_loss - self.min_delta:
+            self.best_loss = train_loss
+            self.counter = 0
+        else:
+            self.counter += 1
+        return self.counter >= self.patience
+
+# Training process
+MAX_EPOCHS = 200
+PATIENCE = 5
+
+def train_with_early_stopping(model, train_loader, test_loader, optimizer, criterion, max_epochs, patience, optimizer_name):
+    early_stopping = EarlyStopping(patience=patience, min_delta=0.01)
+    train_losses = []
     for epoch in range(max_epochs):
         train_loss, train_acc = train_model(model, train_loader, optimizer, criterion)
         val_loss, val_acc = evaluate_model(model, test_loader, criterion)
+        train_losses.append(train_loss)
         print(f"Epoch {epoch+1}/{max_epochs}: Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.4f}, Test Loss: {val_loss:.4f}, Test Acc: {val_acc:.4f}")
         
-        if train_loss < 0.15:
-            print("Already converged.")
+        if early_stopping(train_loss):
+            print("Early stopping due to no significant change in training loss.")
             break
 
+    plot_training_loss(train_losses, optimizer_name)
+
+def plot_training_loss(train_losses, optimizer_name):
+    plt.figure()
+    plt.plot(train_losses, label='Training Loss')
+    plt.xlabel('Epochs')
+    plt.ylabel('Loss')
+    plt.title(f'Training Loss vs Epochs for {optimizer_name}')
+    plt.legend()
+    plt.savefig(f'training_loss_{optimizer_name}.png')
+    plt.close()
+
 print(f"Training with SGD of lr={sgd_lr}.")
-train_with_early_stopping(model_for_sgd, train_loader, test_loader, optimizer_sgd, criterion, MAX_EPOCHS)
+train_with_early_stopping(model_for_sgd, train_loader, test_loader, optimizer_sgd, criterion, MAX_EPOCHS, PATIENCE, 'SGD')
 
 print(f"Training with Adam.")
-train_with_early_stopping(model_for_adam, train_loader, test_loader, optimizer_adam, criterion, MAX_EPOCHS)
+train_with_early_stopping(model_for_adam, train_loader, test_loader, optimizer_adam, criterion, MAX_EPOCHS, PATIENCE, 'Adam')
 
 print(f"Training with Lion.")
-train_with_early_stopping(model_for_lion, train_loader, test_loader, optimizer_lion, criterion, MAX_EPOCHS)
+train_with_early_stopping(model_for_lion, train_loader, test_loader, optimizer_lion, criterion, MAX_EPOCHS, PATIENCE, 'Lion')
