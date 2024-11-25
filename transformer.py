@@ -46,7 +46,7 @@ train_loader = DataLoader(list(train_iter), batch_size=BATCH_SIZE, shuffle=True,
 test_loader = DataLoader(list(test_iter), batch_size=BATCH_SIZE, shuffle=False, collate_fn=collate_batch)
 
 class TransformerModel(nn.Module):
-    def __init__(self, vocab_size, embed_size, num_heads, hidden_dim, num_layers, num_classes, dropout=0.3):
+    def __init__(self, vocab_size, embed_size, num_heads, hidden_dim, num_layers, num_classes, dropout=0.2):
         super(TransformerModel, self).__init__()
         self.embedding = nn.Embedding(vocab_size, embed_size)
         self.positional_encoding = nn.Parameter(torch.zeros(1, MAX_SEQ_LEN, embed_size))
@@ -73,16 +73,15 @@ NUM_CLASSES = 2  # Binary classification
 model_for_sgd = TransformerModel(len(vocab), EMBED_SIZE, NUM_HEADS, HIDDEN_DIM, NUM_LAYERS, NUM_CLASSES).to(device)
 model_for_adam = TransformerModel(len(vocab), EMBED_SIZE, NUM_HEADS, HIDDEN_DIM, NUM_LAYERS, NUM_CLASSES).to(device)
 model_for_lion = TransformerModel(len(vocab), EMBED_SIZE, NUM_HEADS, HIDDEN_DIM, NUM_LAYERS, NUM_CLASSES).to(device)
-model_for_sophia = TransformerModel(len(vocab), EMBED_SIZE, NUM_HEADS, HIDDEN_DIM, NUM_LAYERS, NUM_CLASSES).to(device)
     
 # Loss function
 criterion = nn.CrossEntropyLoss()
 
 # Optimizers
 sgd_lr = 0.1
-optimizer_sgd = torch.optim.SGD(model_for_sgd.parameters(), lr=sgd_lr)
-optimizer_adam = torch.optim.Adam(model_for_adam.parameters(), lr=0.001, betas=(0.9, 0.999), weight_decay=2e-3)
-optimizer_lion = Lion(model_for_lion.parameters(), lr=2e-4, weight_decay=1e-2)
+optimizer_sgd = torch.optim.SGD(model_for_sgd.parameters(), lr=sgd_lr, weight_decay=1e-4)
+optimizer_adam = torch.optim.Adam(model_for_adam.parameters(), lr=0.001, betas=(0.9, 0.999), weight_decay=1e-3)
+optimizer_lion = Lion(model_for_lion.parameters(), lr=1e-4, weight_decay=1e-2)
 
 
 def train_model(model, dataloader, optimizer, criterion):
@@ -120,7 +119,7 @@ def evaluate_model(model, dataloader, criterion):
 
 
 # Training process
-MAX_EPOCHS = 50
+MAX_EPOCHS = 100
 
 def train_with_early_stopping(model, train_loader, test_loader, optimizer, criterion, max_epochs):
     for epoch in range(max_epochs):
@@ -128,7 +127,7 @@ def train_with_early_stopping(model, train_loader, test_loader, optimizer, crite
         val_loss, val_acc = evaluate_model(model, test_loader, criterion)
         print(f"Epoch {epoch+1}/{max_epochs}: Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.4f}, Test Loss: {val_loss:.4f}, Test Acc: {val_acc:.4f}")
         
-        if train_loss < 0.1:
+        if train_loss < 0.15:
             print("Already converged.")
             break
 
