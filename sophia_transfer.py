@@ -1,4 +1,4 @@
-from sophia import SophiaG
+from sophia_transfer import SophiaG
 optimizer_sophia = SophiaG(
     model_for_adam_mini.parameters(),
     lr=2e-4,
@@ -12,7 +12,7 @@ def train_model_with_sophia(model, dataloader, optimizer, criterion, k=10):
     total_loss, total_acc = 0, 0
     iter_num = -1
     total_bs = len(dataloader)
-    block_size = BATCH_SIZE
+    block_size = 1
     bs = total_bs * block_size
 
     for texts, labels in dataloader:
