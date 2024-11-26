@@ -31,7 +31,8 @@ vocab = build_vocab_from_iterator(yield_tokens(train_iter), specials=["<pad>", "
 vocab.set_default_index(vocab["<unk>"])  # Handle unknown tokens
 
 # Hyperparameters
-BATCH_SIZE = 32
+# BATCH_SIZE = 32
+BATCH_SIZE = 256
 MAX_SEQ_LEN = 128  # Max length of sequences
 
 # Collate function for DataLoader
@@ -139,7 +140,7 @@ class EarlyStopping:
 
 # Training process
 MAX_EPOCHS = 200
-PATIENCE = 5
+PATIENCE = 10
 
 def train_with_early_stopping(model, train_loader, test_loader, optimizer, criterion, max_epochs, patience, optimizer_name):
     early_stopping = EarlyStopping(patience=patience, min_delta=0.01)
@@ -163,14 +164,14 @@ def plot_training_loss(train_losses, optimizer_name):
     plt.ylabel('Loss')
     plt.title(f'Training Loss vs Epochs for {optimizer_name}')
     plt.legend()
-    plt.savefig(f'training_loss_{optimizer_name}.png')
+    plt.savefig(f'training_loss_{optimizer_name}_256.png')
     plt.close()
 
-print(f"Training with SGD of lr={sgd_lr}.")
-train_with_early_stopping(model_for_sgd, train_loader, test_loader, optimizer_sgd, criterion, MAX_EPOCHS, PATIENCE, 'SGD')
+# print(f"Training with SGD of lr={sgd_lr}.")
+# train_with_early_stopping(model_for_sgd, train_loader, test_loader, optimizer_sgd, criterion, MAX_EPOCHS, PATIENCE, 'SGD')
 
-print(f"Training with Adam.")
-train_with_early_stopping(model_for_adam, train_loader, test_loader, optimizer_adam, criterion, MAX_EPOCHS, PATIENCE, 'Adam')
+# print(f"Training with Adam.")
+# train_with_early_stopping(model_for_adam, train_loader, test_loader, optimizer_adam, criterion, MAX_EPOCHS, PATIENCE, 'Adam')
 
 print(f"Training with Lion.")
 train_with_early_stopping(model_for_lion, train_loader, test_loader, optimizer_lion, criterion, MAX_EPOCHS, PATIENCE, 'Lion')
