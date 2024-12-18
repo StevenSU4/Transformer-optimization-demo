@@ -80,10 +80,10 @@ model_for_lion = TransformerModel(len(vocab), EMBED_SIZE, NUM_HEADS, HIDDEN_DIM,
 criterion = nn.CrossEntropyLoss()
 
 # Optimizers
-sgd_lr = 0.1
-optimizer_sgd = torch.optim.SGD(model_for_sgd.parameters(), lr=sgd_lr, weight_decay=1e-4)
-optimizer_adam = torch.optim.Adam(model_for_adam.parameters(), lr=0.001, betas=(0.9, 0.999), weight_decay=1e-3)
-optimizer_lion = Lion(model_for_lion.parameters(), lr=1e-4, weight_decay=1e-2)
+sgd_lr = 0.01
+optimizer_sgd = torch.optim.SGD(model_for_sgd.parameters(), lr=sgd_lr)
+optimizer_adam = torch.optim.Adam(model_for_adam.parameters(), lr=0.001)
+optimizer_lion = Lion(model_for_lion.parameters(), lr=1e-4)
 
 
 def train_model(model, dataloader, optimizer, criterion):
@@ -167,11 +167,11 @@ def plot_training_loss(train_losses, optimizer_name):
     plt.savefig(f'training_loss_{optimizer_name}_256.png')
     plt.close()
 
-# print(f"Training with SGD of lr={sgd_lr}.")
-# train_with_early_stopping(model_for_sgd, train_loader, test_loader, optimizer_sgd, criterion, MAX_EPOCHS, PATIENCE, 'SGD')
+print(f"Training with SGD of lr={sgd_lr}.")
+train_with_early_stopping(model_for_sgd, train_loader, test_loader, optimizer_sgd, criterion, MAX_EPOCHS, PATIENCE, 'SGD')
 
-# print(f"Training with Adam.")
-# train_with_early_stopping(model_for_adam, train_loader, test_loader, optimizer_adam, criterion, MAX_EPOCHS, PATIENCE, 'Adam')
+print(f"Training with Adam.")
+train_with_early_stopping(model_for_adam, train_loader, test_loader, optimizer_adam, criterion, MAX_EPOCHS, PATIENCE, 'Adam')
 
 print(f"Training with Lion.")
 train_with_early_stopping(model_for_lion, train_loader, test_loader, optimizer_lion, criterion, MAX_EPOCHS, PATIENCE, 'Lion')
