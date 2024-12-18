@@ -156,29 +156,78 @@ def train_with_early_stopping(model, train_loader, test_loader, optimizer, crite
             break
     return train_losses
 
-# Function to plot all training processes
-def plot_comparison(sgd_losses, adam_losses, lion_losses):
+# # Function to plot all training processes
+# def plot_comparison(sgd_losses, adam_losses, lion_losses):
+#     plt.figure(figsize=(10, 6))
+#     plt.plot(sgd_losses, label='SGD')
+#     plt.plot(adam_losses, label='Adam')
+#     plt.plot(lion_losses, label='Lion')
+#     plt.xlabel('Epochs')
+#     plt.ylabel('Loss')
+#     plt.title('Training Loss Comparison')
+#     plt.legend()
+#     plt.grid(True)
+#     plt.savefig('default_lr_batchsize_128.png')
+
+# # Train models and collect training losses
+# print(f"Training with SGD of lr={sgd_lr}.")
+# sgd_losses = train_with_early_stopping(model_for_sgd, train_loader, test_loader, optimizer_sgd, criterion, MAX_EPOCHS, PATIENCE)
+
+# print(f"Training with Adam.")
+# adam_losses = train_with_early_stopping(model_for_adam, train_loader, test_loader, optimizer_adam, criterion, MAX_EPOCHS, PATIENCE)
+
+# print(f"Training with Lion.")
+# lion_losses = train_with_early_stopping(model_for_lion, train_loader, test_loader, optimizer_lion, criterion, MAX_EPOCHS, PATIENCE)
+
+# # Plot comparison
+# plot_comparison(sgd_losses, adam_losses, lion_losses)
+
+
+# General function to train and compare optimizers with different learning rates
+def compare_optimizers_with_learning_rates(model_template, train_loader, test_loader, criterion, max_epochs, patience, optimizer_class, learning_rates):
+    results = {}
+    for lr in learning_rates:
+        print(f"Training with {optimizer_class.__name__} optimizer and learning rate = {lr}")
+        # Create a new model instance for each learning rate
+        model = model_template(len(vocab), EMBED_SIZE, NUM_HEADS, HIDDEN_DIM, NUM_LAYERS, NUM_CLASSES).to(device)
+        optimizer = optimizer_class(model.parameters(), lr=lr)
+        
+        # Train the model
+        train_losses = train_with_early_stopping(model, train_loader, test_loader, optimizer, criterion, max_epochs, patience)
+        results[lr] = train_losses
+    return results
+
+# Function to plot training losses for different learning rates of an optimizer
+def plot_learning_rate_comparison(results, optimizer_name):
     plt.figure(figsize=(10, 6))
-    plt.plot(sgd_losses, label='SGD')
-    plt.plot(adam_losses, label='Adam')
-    plt.plot(lion_losses, label='Lion')
+    for lr, losses in results.items():
+        plt.plot(losses, label=f'{optimizer_name} (lr={lr})')
     plt.xlabel('Epochs')
     plt.ylabel('Loss')
-    plt.title('Training Loss Comparison')
+    plt.title(f'Training Loss Comparison for {optimizer_name} with Different Learning Rates')
     plt.legend()
     plt.grid(True)
-    plt.savefig('default_lr_batchsize_128.png')
-    plt.show()
+    plt.savefig(f'{optimizer_name.lower()}_lr_compare_batchsize_128.png')
 
-# Train models and collect training losses
-print(f"Training with SGD of lr={sgd_lr}.")
-sgd_losses = train_with_early_stopping(model_for_sgd, train_loader, test_loader, optimizer_sgd, criterion, MAX_EPOCHS, PATIENCE)
+# Learning rates to explore
+learning_rates_SGD = [0.01, 0.05, 0.1, 0.5, 1.0]
+learning_rates_Adam = [1e-4, 5e-4, 1e-3, 5e-3, 1e-2]
+learning_rates_Lion = [1e-5, 5e-5, 1e-4, 5e-4, 1e-3]
 
-print(f"Training with Adam.")
-adam_losses = train_with_early_stopping(model_for_adam, train_loader, test_loader, optimizer_adam, criterion, MAX_EPOCHS, PATIENCE)
+# Compare SGD
+sgd_results = compare_optimizers_with_learning_rates(
+    TransformerModel, train_loader, test_loader, criterion, MAX_EPOCHS, PATIENCE, torch.optim.SGD, learning_rates_SGD
+)
+plot_learning_rate_comparison(sgd_results, "SGD")
 
-print(f"Training with Lion.")
-lion_losses = train_with_early_stopping(model_for_lion, train_loader, test_loader, optimizer_lion, criterion, MAX_EPOCHS, PATIENCE)
+# Compare Adam
+adam_results = compare_optimizers_with_learning_rates(
+    TransformerModel, train_loader, test_loader, criterion, MAX_EPOCHS, PATIENCE, torch.optim.Adam, learning_rates_Adam
+)
+plot_learning_rate_comparison(adam_results, "Adam")
 
-# Plot comparison
-plot_comparison(sgd_losses, adam_losses, lion_losses)
+# Compare Lion
+lion_results = compare_optimizers_with_learning_rates(
+    TransformerModel, train_loader, test_loader, criterion, MAX_EPOCHS, PATIENCE, Lion, learning_rates_Lion
+)
+plot_learning_rate_comparison(lion_results, "Lion")
