@@ -183,51 +183,120 @@ def train_with_early_stopping(model, train_loader, test_loader, optimizer, crite
 # plot_comparison(sgd_losses, adam_losses, lion_losses)
 
 
-# General function to train and compare optimizers with different learning rates
-def compare_optimizers_with_learning_rates(model_template, train_loader, test_loader, criterion, max_epochs, patience, optimizer_class, learning_rates):
+# # General function to train and compare optimizers with different learning rates
+# def compare_optimizers_with_learning_rates(model_template, train_loader, test_loader, criterion, max_epochs, patience, optimizer_class, learning_rates):
+#     results = {}
+#     for lr in learning_rates:
+#         print(f"Training with {optimizer_class.__name__} optimizer and learning rate = {lr}")
+#         # Create a new model instance for each learning rate
+#         model = model_template(len(vocab), EMBED_SIZE, NUM_HEADS, HIDDEN_DIM, NUM_LAYERS, NUM_CLASSES).to(device)
+#         optimizer = optimizer_class(model.parameters(), lr=lr)
+        
+#         # Train the model
+#         train_losses = train_with_early_stopping(model, train_loader, test_loader, optimizer, criterion, max_epochs, patience)
+#         results[lr] = train_losses
+#     return results
+
+# # Function to plot training losses for different learning rates of an optimizer
+# def plot_learning_rate_comparison(results, optimizer_name):
+#     plt.figure(figsize=(10, 6))
+#     for lr, losses in results.items():
+#         plt.plot(losses, label=f'{optimizer_name} (lr={lr})')
+#     plt.xlabel('Epochs')
+#     plt.ylabel('Loss')
+#     plt.title(f'Training Loss Comparison for {optimizer_name} with Different Learning Rates')
+#     plt.legend()
+#     plt.grid(True)
+#     plt.savefig(f'{optimizer_name.lower()}_lr_compare_batchsize_128.png')
+
+# # Learning rates to explore
+# learning_rates_SGD = [0.01, 0.05, 0.1, 0.5, 1.0]
+# learning_rates_Adam = [1e-4, 5e-4, 1e-3, 5e-3, 1e-2]
+# learning_rates_Lion = [1e-5, 5e-5, 1e-4, 5e-4, 1e-3]
+
+# # Compare SGD
+# sgd_results = compare_optimizers_with_learning_rates(
+#     TransformerModel, train_loader, test_loader, criterion, MAX_EPOCHS, PATIENCE, torch.optim.SGD, learning_rates_SGD
+# )
+# plot_learning_rate_comparison(sgd_results, "SGD")
+
+# # Compare Adam
+# adam_results = compare_optimizers_with_learning_rates(
+#     TransformerModel, train_loader, test_loader, criterion, MAX_EPOCHS, PATIENCE, torch.optim.Adam, learning_rates_Adam
+# )
+# plot_learning_rate_comparison(adam_results, "Adam")
+
+# # Compare Lion
+# lion_results = compare_optimizers_with_learning_rates(
+#     TransformerModel, train_loader, test_loader, criterion, MAX_EPOCHS, PATIENCE, Lion, learning_rates_Lion
+# )
+# plot_learning_rate_comparison(lion_results, "Lion")
+
+
+# Function to compare different batch sizes for an optimizer
+def compare_optimizers_with_batch_sizes(model_template, dataset, criterion, max_epochs, patience, optimizer_class, learning_rate, batch_sizes):
     results = {}
-    for lr in learning_rates:
-        print(f"Training with {optimizer_class.__name__} optimizer and learning rate = {lr}")
-        # Create a new model instance for each learning rate
+    for batch_size in batch_sizes:
+        print(f"Training with {optimizer_class.__name__}, batch size = {batch_size}, learning rate = {learning_rate}")
+        
+        # Adjust DataLoader for the current batch size
+        train_loader = DataLoader(list(dataset['train']), batch_size=batch_size, shuffle=True, collate_fn=collate_batch)
+        test_loader = DataLoader(list(dataset['test']), batch_size=batch_size, shuffle=False, collate_fn=collate_batch)
+        
+        # Create a new model instance
         model = model_template(len(vocab), EMBED_SIZE, NUM_HEADS, HIDDEN_DIM, NUM_LAYERS, NUM_CLASSES).to(device)
-        optimizer = optimizer_class(model.parameters(), lr=lr)
+        optimizer = optimizer_class(model.parameters(), lr=learning_rate)
         
         # Train the model
         train_losses = train_with_early_stopping(model, train_loader, test_loader, optimizer, criterion, max_epochs, patience)
-        results[lr] = train_losses
+        results[batch_size] = train_losses
     return results
 
-# Function to plot training losses for different learning rates of an optimizer
-def plot_learning_rate_comparison(results, optimizer_name):
+# Function to plot comparison of different batch sizes for one optimizer
+def plot_batch_size_comparison(results, optimizer_name):
     plt.figure(figsize=(10, 6))
-    for lr, losses in results.items():
-        plt.plot(losses, label=f'{optimizer_name} (lr={lr})')
+    for batch_size, losses in results.items():
+        plt.plot(losses, label=f'batch size={batch_size}')
     plt.xlabel('Epochs')
     plt.ylabel('Loss')
-    plt.title(f'Training Loss Comparison for {optimizer_name} with Different Learning Rates')
+    plt.title(f'Training Loss Comparison for {optimizer_name} with Different Batch Sizes')
     plt.legend()
     plt.grid(True)
-    plt.savefig(f'{optimizer_name.lower()}_lr_compare_batchsize_128.png')
+    plt.savefig(f'{optimizer_name.lower()}_batch_size_comparison.png')
 
-# Learning rates to explore
-learning_rates_SGD = [0.01, 0.05, 0.1, 0.5, 1.0]
-learning_rates_Adam = [1e-4, 5e-4, 1e-3, 5e-3, 1e-2]
-learning_rates_Lion = [1e-5, 5e-5, 1e-4, 5e-4, 1e-3]
+# Function to plot all optimizers for the same batch size
+def plot_optimizer_comparison_for_batch_size(results, batch_size):
+    plt.figure(figsize=(10, 6))
+    for optimizer_name, optimizer_results in results.items():
+        losses = optimizer_results[batch_size]
+        plt.plot(losses, label=f'{optimizer_name}')
+    plt.xlabel('Epochs')
+    plt.ylabel('Loss')
+    plt.title(f'Training Loss Comparison for Batch Size {batch_size}')
+    plt.legend()
+    plt.grid(True)
+    plt.savefig(f'batch_size_{batch_size}_optimizer_comparison.png')
 
-# Compare SGD
-sgd_results = compare_optimizers_with_learning_rates(
-    TransformerModel, train_loader, test_loader, criterion, MAX_EPOCHS, PATIENCE, torch.optim.SGD, learning_rates_SGD
-)
-plot_learning_rate_comparison(sgd_results, "SGD")
+# Batch sizes to explore
+batch_sizes = [32, 64, 128, 256, 512]
 
-# Compare Adam
-adam_results = compare_optimizers_with_learning_rates(
-    TransformerModel, train_loader, test_loader, criterion, MAX_EPOCHS, PATIENCE, torch.optim.Adam, learning_rates_Adam
-)
-plot_learning_rate_comparison(adam_results, "Adam")
+# Collect results for each optimizer
+results = {
+    "SGD": compare_optimizers_with_batch_sizes(
+        TransformerModel, dataset, criterion, MAX_EPOCHS, PATIENCE, torch.optim.SGD, 0.5, batch_sizes
+    ),
+    "Adam": compare_optimizers_with_batch_sizes(
+        TransformerModel, dataset, criterion, MAX_EPOCHS, PATIENCE, torch.optim.Adam, 0.01, batch_sizes
+    ),
+    "Lion": compare_optimizers_with_batch_sizes(
+        TransformerModel, dataset, criterion, MAX_EPOCHS, PATIENCE, Lion, 1e-3, batch_sizes
+    )
+}
 
-# Compare Lion
-lion_results = compare_optimizers_with_learning_rates(
-    TransformerModel, train_loader, test_loader, criterion, MAX_EPOCHS, PATIENCE, Lion, learning_rates_Lion
-)
-plot_learning_rate_comparison(lion_results, "Lion")
+# Plot batch size comparison for each optimizer
+for optimizer_name, optimizer_results in results.items():
+    plot_batch_size_comparison(optimizer_results, optimizer_name)
+
+# Plot optimizer comparison for each batch size
+for batch_size in batch_sizes:
+    plot_optimizer_comparison_for_batch_size(results, batch_size)
