@@ -32,7 +32,7 @@ vocab.set_default_index(vocab["<unk>"])  # Handle unknown tokens
 
 # Hyperparameters
 # BATCH_SIZE = 32
-BATCH_SIZE = 256
+BATCH_SIZE = 128
 MAX_SEQ_LEN = 128  # Max length of sequences
 
 # Collate function for DataLoader
@@ -142,7 +142,7 @@ class EarlyStopping:
 MAX_EPOCHS = 200
 PATIENCE = 10
 
-def train_with_early_stopping(model, train_loader, test_loader, optimizer, criterion, max_epochs, patience, optimizer_name):
+def train_with_early_stopping(model, train_loader, test_loader, optimizer, criterion, max_epochs, patience):
     early_stopping = EarlyStopping(patience=patience, min_delta=0.01)
     train_losses = []
     for epoch in range(max_epochs):
@@ -154,24 +154,31 @@ def train_with_early_stopping(model, train_loader, test_loader, optimizer, crite
         if early_stopping(train_loss):
             print("Early stopping due to no significant change in training loss.")
             break
+    return train_losses
 
-    plot_training_loss(train_losses, optimizer_name)
-
-def plot_training_loss(train_losses, optimizer_name):
-    plt.figure()
-    plt.plot(train_losses, label='Training Loss')
+# Function to plot all training processes
+def plot_comparison(sgd_losses, adam_losses, lion_losses):
+    plt.figure(figsize=(10, 6))
+    plt.plot(sgd_losses, label='SGD', linestyle='-', marker='o')
+    plt.plot(adam_losses, label='Adam', linestyle='--', marker='s')
+    plt.plot(lion_losses, label='Lion', linestyle='-.', marker='^')
     plt.xlabel('Epochs')
     plt.ylabel('Loss')
-    plt.title(f'Training Loss vs Epochs for {optimizer_name}')
+    plt.title('Training Loss Comparison')
     plt.legend()
-    plt.savefig(f'training_loss_{optimizer_name}_256.png')
-    plt.close()
+    plt.grid(True)
+    plt.savefig('default_lr_batchsize_128.png')
+    plt.show()
 
+# Train models and collect training losses
 print(f"Training with SGD of lr={sgd_lr}.")
-train_with_early_stopping(model_for_sgd, train_loader, test_loader, optimizer_sgd, criterion, MAX_EPOCHS, PATIENCE, 'SGD')
+sgd_losses = train_with_early_stopping(model_for_sgd, train_loader, test_loader, optimizer_sgd, criterion, MAX_EPOCHS, PATIENCE)
 
 print(f"Training with Adam.")
-train_with_early_stopping(model_for_adam, train_loader, test_loader, optimizer_adam, criterion, MAX_EPOCHS, PATIENCE, 'Adam')
+adam_losses = train_with_early_stopping(model_for_adam, train_loader, test_loader, optimizer_adam, criterion, MAX_EPOCHS, PATIENCE)
 
 print(f"Training with Lion.")
-train_with_early_stopping(model_for_lion, train_loader, test_loader, optimizer_lion, criterion, MAX_EPOCHS, PATIENCE, 'Lion')
+lion_losses = train_with_early_stopping(model_for_lion, train_loader, test_loader, optimizer_lion, criterion, MAX_EPOCHS, PATIENCE)
+
+# Plot comparison
+plot_comparison(sgd_losses, adam_losses, lion_losses)
