@@ -80,7 +80,7 @@ model_for_lion = TransformerModel(len(vocab), EMBED_SIZE, NUM_HEADS, HIDDEN_DIM,
 criterion = nn.CrossEntropyLoss()
 
 # Optimizers
-sgd_lr = 0.01
+sgd_lr = 0.1
 optimizer_sgd = torch.optim.SGD(model_for_sgd.parameters(), lr=sgd_lr)
 optimizer_adam = torch.optim.Adam(model_for_adam.parameters(), lr=0.001)
 optimizer_lion = Lion(model_for_lion.parameters(), lr=1e-4)
@@ -159,9 +159,9 @@ def train_with_early_stopping(model, train_loader, test_loader, optimizer, crite
 # Function to plot all training processes
 def plot_comparison(sgd_losses, adam_losses, lion_losses):
     plt.figure(figsize=(10, 6))
-    plt.plot(sgd_losses, label='SGD', linestyle='-', marker='o')
-    plt.plot(adam_losses, label='Adam', linestyle='--', marker='s')
-    plt.plot(lion_losses, label='Lion', linestyle='-.', marker='^')
+    plt.plot(sgd_losses, label='SGD')
+    plt.plot(adam_losses, label='Adam')
+    plt.plot(lion_losses, label='Lion')
     plt.xlabel('Epochs')
     plt.ylabel('Loss')
     plt.title('Training Loss Comparison')
